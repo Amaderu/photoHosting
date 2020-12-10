@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">photoHosting</string>
+    <string name="btn_login">log in</string>
+    <string name="btn_register">register</string>
+    <string name="btn_next">next</string>
+    <string name="auth">Authorization</string>
+</resources>
