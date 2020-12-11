@@ -9,12 +9,16 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import java.util.regex.Pattern;
 
 public class Login extends AppCompatActivity {
     private EditText Mail;
     private EditText Password;
     private Button btnNext;
+
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^" +
                     //"(?=.*[0-9])" +         //at least 1 digit
@@ -30,12 +34,12 @@ public class Login extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        init();
+    }
+    private void init(){
         Mail = (EditText) findViewById(R.id.edtFieldMail);
         Password = (EditText) findViewById(R.id.edtFieldPass);
         btnNext = (Button) findViewById(R.id.login_btnNext);
-
-        Mail.setText("email");
-        Password.setText("password");
 
     }
 
