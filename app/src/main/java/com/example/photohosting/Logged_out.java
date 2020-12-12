@@ -7,9 +7,13 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 public class Logged_out extends AppCompatActivity {
     Button btnLog,btnReg;
     Intent intent;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -17,6 +21,15 @@ public class Logged_out extends AppCompatActivity {
         setContentView(R.layout.activity_logged_out);
         btnLog = (Button) findViewById(R.id.log);
         btnReg = (Button) findViewById(R.id.reg);
+    }
+    @Override
+    protected void onStart() {
+        super.onStart();
+        FirebaseUser cUser = mAuth.getCurrentUser();
+        if(cUser != null)
+        {
+            //go to main activity
+        }
     }
 
     public void nextActivity(View v) {

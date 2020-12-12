@@ -7,27 +7,48 @@
     android:background="@android:color/white"
     tools:context=".MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/roboto_italic"
-        android:text="Sharing Photo"
-        android:textColor="@color/black"
-        android:textSize="48sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/toolBarMain"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:background="@color/black"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <Button
+            android:id="@+id/btnSearch"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="30dp"
+            android:background="@drawable/ic_search"
+            android:gravity="center"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/btnFilter"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/ic_filterlist"
+            android:gravity="center"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/btnSearch"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="100dp"
-        android:layout_marginBottom="50dp"
+        android:layout_width="288dp"
+        android:layout_height="512dp"
         app:layout_constraintBottom_toTopOf="@id/btnPlaceMain"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/toolBarMain" />
+
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/btnPlaceMain"

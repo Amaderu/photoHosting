@@ -9,6 +9,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -18,6 +20,7 @@ public class Login extends AppCompatActivity {
     private EditText Mail;
     private EditText Password;
     private Button btnNext;
+    private FirebaseAuth mAuth;
 
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^" +
@@ -40,7 +43,6 @@ public class Login extends AppCompatActivity {
         Mail = (EditText) findViewById(R.id.edtFieldMail);
         Password = (EditText) findViewById(R.id.edtFieldPass);
         btnNext = (Button) findViewById(R.id.login_btnNext);
-
     }
 
     private boolean validateUser() {
@@ -76,7 +78,6 @@ public class Login extends AppCompatActivity {
                 | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
                 | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-
         startActivity(intent);
     }
 }
