@@ -1,9 +1,13 @@
 package com.example.photohosting;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.DialogFragment;
 
+import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -12,17 +16,23 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.annotations.Nullable;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.ListResult;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -30,19 +40,33 @@ import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
+    //list
+    List<StorageReference> prefixes;
+    List<StorageReference> items;
+    String page;
+    //View
     ImageView imageView;
-    Button btnSelect, btnUpload;
+    /*Button btnSelect, btnUpload;
+    private final int PICK_IMAGE_REQUEST = 71;*/
+    Button btnSignOut, btnSearch, btnToUpload, btnSync;
+    ListView listView;
     private Uri filePath;
+    private String userId;
+    Intent intent;
 
-    private final int PICK_IMAGE_REQUEST = 71;
+    /*private FirebaseAuth mAuth;
+    private FirebaseUser cUser;*/
+
     private FirebaseStorage storage;
     private StorageReference mStorageReference;
     private FirebaseDatabase mDataBase;
     private DatabaseReference mDataBaseReference;
-    private String USER_KEY = "Photos";
+    private String USER_KEY = "Users";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,28 +76,59 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void init() {
+        listView = (ListView) findViewById(R.id.listView);
+
         //search btn on view
         imageView = (ImageView) findViewById(R.id.imageView);
-        btnSelect = (Button) findViewById(R.id.btnSelect);
-        btnUpload = (Button) findViewById(R.id.btnUpload);
+
+
+        btnSignOut = (Button) findViewById(R.id.btnSignOut);
+        btnSearch = (Button) findViewById(R.id.btnSearch);
+        btnToUpload = (Button) findViewById(R.id.btnToUpload);
+        btnSync = (Button) findViewById(R.id.btnSync);
+
         //getInstance database and storage
         storage = FirebaseStorage.getInstance();
         mStorageReference = storage.getReference();
         mDataBase = FirebaseDatabase.getInstance();
         mDataBaseReference = mDataBase.getReference(USER_KEY);
         //Button actions
-        btnSelect.setOnClickListener(new View.OnClickListener() {
+        btnSearch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                imageListAllPaginated(page);
+            }
+        });
+        btnSignOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                accountSignOut();
+            }
+        });
+        btnToUpload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                toUploadActivity();
+            }
+        });
+        btnSync.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                toDownloadActivity();
+            }
+        });
+        /*btnSelect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 chooseImage();
             }
         });
-        /*btnUpload.setOnClickListener(new View.OnClickListener() {
+        btnUpload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 uploadImage();
             }
-        });*/
+        });
         //загрузка превращается в скачку
         btnUpload.setText("Download Image");
         btnUpload.setOnClickListener(new View.OnClickListener() {
@@ -81,7 +136,12 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 downloadImage();
             }
-        });
+        });*/
+
+        Intent intent = getIntent();
+        userId = intent.getStringExtra("userId");
+
+        //Toast.makeText(this, "User: "+userId, Toast.LENGTH_LONG).show();
 
         /*Task<Uri> uriTask = mStorageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
             @Override
@@ -93,12 +153,79 @@ public class MainActivity extends AppCompatActivity {
         });*/
     }
 
+    private void toUploadActivity(){
+        intent = new Intent(this,UploadActivity.class);
+        intent.putExtra("userId",userId);
+
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        //intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+    }
+    private void toDownloadActivity(){
+        intent = new Intent(this,DownloadActivity.class);
+        intent.putExtra("userId",userId);
+        intent.putExtra("downloadingFile","island.png");
+
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+    }
+
+    public void imageListAllPaginated(@Nullable String pageToken) {
+        StorageReference listRef = mStorageReference.child("images").child(userId);
+
+        Task<ListResult> listPageTask = pageToken != null
+                ? listRef.list(5, pageToken)
+                : listRef.list(5);
+
+        listPageTask
+                .addOnSuccessListener(new OnSuccessListener<ListResult>() {
+                    @Override
+                    public void onSuccess(ListResult listResult) {
+                        List<StorageReference> prefixes = listResult.getPrefixes();
+                        List<StorageReference> items = listResult.getItems();
+
+                        //не нужная часть адаптера
+                        ArrayList<String> listItems= new ArrayList<String>();
+
+
+                        // Process page of results
+                        Toast.makeText(MainActivity.this, "Page token: "+pageToken, Toast.LENGTH_LONG).show();
+                        Toast.makeText(MainActivity.this, "Prefixes", Toast.LENGTH_LONG).show();
+                        for (StorageReference prefix : prefixes) {
+                            //Toast.makeText(MainActivity.this, prefix.toString(), Toast.LENGTH_LONG).show();
+                        }
+                        Toast.makeText(MainActivity.this, "Items", Toast.LENGTH_LONG).show();
+
+                        for (StorageReference item : items) {
+                            listItems.add(item.toString());
+                            //Toast.makeText(MainActivity.this, item.toString(), Toast.LENGTH_LONG).show();
+                        }
+
+                        // Recurse onto next page
+                        if (listResult.getPageToken() != null) {
+                            imageListAllPaginated(listResult.getPageToken());
+                        }
+                        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(MainActivity.this,
+                                android.R.layout.simple_list_item_1,
+                                listItems);
+                        listView.setAdapter(arrayAdapter);
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                // Uh-oh, an error occurred.
+                Toast.makeText(MainActivity.this, "Uh-oh, an error occurred.", Toast.LENGTH_SHORT).show();
+                Log.e("Error ImageList",e.toString());
+            }
+        });
+    }
+
     //delete file from cloud storage
     private void deleteImageFromCloud() {
         StorageReference storageRef = storage.getReference();
 
         // Create a reference to the file to delete
-        StorageReference desertRef = storageRef.child("images/desert.jpg");
+        StorageReference desertRef = storageRef.child("images").child(userId).child("desert.jpg");
 
         // Delete the file
         desertRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -114,11 +241,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    //download to file
+    /*//download to file
     private void downloadImage() {
         try {
             String fileName = "island.jpg";
-            final StorageReference downloadedFileRef = mStorageReference.child("images").child(fileName);
+            final StorageReference downloadedFileRef = mStorageReference.child("images").child(userId).child(fileName);
             //cache file
             final File localFile = File.createTempFile("images", "jpg");
             //final File localFile = new File(Context.getApplicationContext.getFilesDir(), fileName);
@@ -166,7 +293,7 @@ public class MainActivity extends AppCompatActivity {
             });
         } catch (IOException e) {
         }
-    }
+    }*/
     /*private void uploadFile(){
         Uri file = Uri.fromFile(new File("path/to/images/rivers.jpg"));
         StorageReference riversRef = storageRef.child("images/rivers.jpg");
@@ -205,7 +332,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }*/
 
-    private void chooseImage() {
+    /*private void chooseImage() {
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
@@ -226,18 +353,48 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
+    }*/
+
+    public void accountSignOut() {
+        showDialog(776);
     }
 
-    public void uploadImage() {
+    protected Dialog onCreateDialog(int id) {
+        if (id == 776) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setTitle("Выход из аккаунта");  // заголовок
+            builder.setMessage("Вы действительно хотите выйти?"); // сообщение
+            builder.setPositiveButton("Да", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    FirebaseAuth.getInstance().signOut();
+                    final Intent intent = new Intent(MainActivity.this, Logged_out.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);//root
+                    startActivity(intent);
+                    finish();
+                }
+            });
+            builder.setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    Toast.makeText(MainActivity.this, "Отмена выхода", Toast.LENGTH_SHORT).show();
+                }
+            });
+            builder.setCancelable(true);
+            return builder.create();
+        }
+        return super.onCreateDialog(id);
+    }
+
+    /*public void uploadImage() {
         if (filePath != null) {
+            //check name
             //final String fileName =UUID.randomUUID().toString();
-            final String fileName = "island";
+            final String fileName = filePath.getLastPathSegment();
 
             final ProgressDialog progressDialog = new ProgressDialog(this);
             progressDialog.setTitle("Uploading...");
             progressDialog.show();
 
-            StorageReference ref = mStorageReference.child("images/" + fileName);
+            StorageReference ref = mStorageReference.child("images").child(userId).child(fileName);
             ref.putFile(filePath)
                     .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
@@ -262,5 +419,5 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
         }
-    }
+    }*/
 }
