@@ -7,7 +7,7 @@
     android:background="@android:color/white"
     tools:context=".Login">
 
-    <ImageView
+    <Button
         android:id="@+id/imageView"
         android:layout_width="25dp"
         android:layout_height="25dp"
@@ -15,7 +15,8 @@
         android:layout_marginTop="10dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_union" />
+        android:background="@drawable/ic_union"
+        />
 
     <TextView
         android:id="@+id/textView"

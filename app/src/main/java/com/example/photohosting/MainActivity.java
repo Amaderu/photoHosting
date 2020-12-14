@@ -13,6 +13,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
@@ -23,6 +24,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.google.android.gms.auth.api.signin.internal.Storage;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -30,32 +32,40 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.annotations.NotNull;
 import com.google.firebase.database.annotations.Nullable;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.ListResult;
 import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     //list
-    int pageCount=0;
+    int pageCount = 0;
     ArrayList<String> listItems;
+    /*ArrayList<ImageData> listImages;*/
     ArrayAdapter<String> arrayAdapter;
     //refs
     List<StorageReference> prefixes;
     List<StorageReference> items;
     String page;
-    //View
-    ImageView imageView;
     /*Button btnSelect, btnUpload;
     private final int PICK_IMAGE_REQUEST = 71;*/
     Button btnSignOut, btnSearch, btnToUpload, btnSync;
@@ -83,19 +93,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void init() {
+        //data
+        SortForDate();
+
+
         listView = (ListView) findViewById(R.id.listView);
         //не нужная часть адаптера
-        listItems= new ArrayList<String>();
+        listItems = new ArrayList<String>();
+        /*listImages = new ArrayList<ImageData>();*/
         arrayAdapter = new ArrayAdapter<String>(MainActivity.this,
                 android.R.layout.simple_list_item_1,
                 listItems);
         listView.setAdapter(arrayAdapter);
         setOnClickItem();
 
+
         //search btn on view
-        imageView = (ImageView) findViewById(R.id.imageView);
-
-
         btnSignOut = (Button) findViewById(R.id.btnSignOut);
         btnSearch = (Button) findViewById(R.id.btnSearch);
         btnToUpload = (Button) findViewById(R.id.btnToUpload);
@@ -110,10 +123,10 @@ public class MainActivity extends AppCompatActivity {
         btnSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                page=null;
-                pageCount=0;
+                page = null;
+                pageCount = 0;
                 listItems.clear();
-                imageListAllPaginated(page,searchFName);
+                imageListAllPaginated(page, searchFName);
             }
         });
         btnSignOut.setOnClickListener(new View.OnClickListener() {
@@ -131,10 +144,14 @@ public class MainActivity extends AppCompatActivity {
         btnSync.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                page=null;
-                pageCount=0;
+                page = null;
+                pageCount = 0;
                 listItems.clear();
                 imageListAllPaginated(page);
+                /*listImages.clear();
+                for(int i=0;i<listItems.size();++i){
+                    getMetadata(listItems.get(i));
+                }*/
             }
         });
         /*btnSelect.setOnClickListener(new View.OnClickListener() {
@@ -172,7 +189,27 @@ public class MainActivity extends AppCompatActivity {
             }
         });*/
     }
-    private void setOnClickItem(){
+
+    public void SortForDate() {
+        try {
+            Date currentDate = new Date();
+            //DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            //String dateTextLast = dateFormat.format(currentDate);
+            //String dateText = date(dateTextLast, dateFormat);
+            Log.d("Актуальная дата:", currentDate.toString());
+            //Log.d("Дата-1", dateText);
+        } catch (Exception e) {
+            Toast.makeText(getApplicationContext(), "ParseError", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /*public String date(String dateTextLast,@NotNull DateFormat dateFormat) throws ParseException {
+        Calendar c = Calendar.getInstance();
+        c.setTime(Objects.requireNonNull(dateFormat.parse(dateTextLast)));
+        c.add(Calendar.DATE, -1);  // number of days to add
+        return dateFormat.format(c.getTime());
+    }*/
+    private void setOnClickItem() {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -181,31 +218,33 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void toUploadActivity(){
-        intent = new Intent(this,UploadActivity.class);
-        intent.putExtra("userId",userId);
+    private void toUploadActivity() {
+        intent = new Intent(this, UploadActivity.class);
+        intent.putExtra("userId", userId);
 
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         //intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
     }
-    private void toDownloadActivity(String imageName){
-        intent = new Intent(this,DownloadActivity.class);
-        intent.putExtra("userId",userId);
-        intent.putExtra("downloadingFile",imageName);
+
+    private void toDownloadActivity(String imageName) {
+        intent = new Intent(this, DownloadActivity.class);
+        intent.putExtra("userId", userId);
+        intent.putExtra("downloadingFile", imageName);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+    }
+
+    private void toDownloadActivity() {
+        intent = new Intent(this, DownloadActivity.class);
+        intent.putExtra("userId", userId);
+        intent.putExtra("downloadingFile", "island.png");
 
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(intent);
     }
-    private void toDownloadActivity(){
-        intent = new Intent(this,DownloadActivity.class);
-        intent.putExtra("userId",userId);
-        intent.putExtra("downloadingFile","island.png");
 
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(intent);
-    }
-    public void imageListAllPaginated(@Nullable String pageToken,String searchFName) {
+    public void imageListAllPaginated(@Nullable String pageToken, String searchFName) {
         StorageReference listRef = mStorageReference.child("images").child(userId);
 
         Task<ListResult> listPageTask = pageToken != null
@@ -218,11 +257,11 @@ public class MainActivity extends AppCompatActivity {
                     public void onSuccess(ListResult listResult) {
                         List<StorageReference> prefixes = listResult.getPrefixes();
                         List<StorageReference> items = listResult.getItems();
-                        pageCount+=1;
+                        pageCount += 1;
 
                         // Process page of results
-                        Toast.makeText(MainActivity.this, "Page "+pageCount, Toast.LENGTH_SHORT).show();
-                        Toast.makeText(MainActivity.this, "Page token: "+pageToken, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "Page " + pageCount, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "Page token: " + pageToken, Toast.LENGTH_SHORT).show();
                         //Toast.makeText(MainActivity.this, "Prefixes", Toast.LENGTH_SHORT).show();
                        /* for (StorageReference prefix : prefixes) {
                             Toast.makeText(MainActivity.this, prefix.toString(), Toast.LENGTH_SHORT).show();
@@ -230,13 +269,15 @@ public class MainActivity extends AppCompatActivity {
                         //Toast.makeText(MainActivity.this, "Items", Toast.LENGTH_SHORT).show();
 
                         for (StorageReference item : items) {
-                            if(!listItems.contains(item.getName())&&item.getName().matches("^.*"+searchFName+".*$")) listItems.add(item.getName());
+                            if (!listItems.contains(item.getName()) && item.getName().matches("^.*" + searchFName + ".*$")) {
+                                listItems.add(item.getName());
+                            }
                             //Toast.makeText(MainActivity.this, item.toString(), Toast.LENGTH_LONG).show();
                         }
 
                         // Recurse onto next page
                         if (listResult.getPageToken() != null) {
-                            imageListAllPaginated(listResult.getPageToken());
+                            imageListAllPaginated(listResult.getPageToken(), searchFName);
                         }
                         arrayAdapter.notifyDataSetChanged();
                     }
@@ -245,7 +286,7 @@ public class MainActivity extends AppCompatActivity {
             public void onFailure(@NonNull Exception e) {
                 // Uh-oh, an error occurred.
                 Toast.makeText(MainActivity.this, "Uh-oh, an error occurred.", Toast.LENGTH_SHORT).show();
-                Log.e("Error ImageList",e.toString());
+                Log.e("Error ImageList", e.toString());
             }
         });
     }
@@ -263,11 +304,11 @@ public class MainActivity extends AppCompatActivity {
                     public void onSuccess(ListResult listResult) {
                         List<StorageReference> prefixes = listResult.getPrefixes();
                         List<StorageReference> items = listResult.getItems();
-                        pageCount+=1;
+                        pageCount += 1;
 
                         // Process page of results
-                        Toast.makeText(MainActivity.this, "Page "+pageCount, Toast.LENGTH_SHORT).show();
-                        Toast.makeText(MainActivity.this, "Page token: "+pageToken, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "Page " + pageCount, Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(MainActivity.this, "Page token: "+pageToken, Toast.LENGTH_SHORT).show();
                         //Toast.makeText(MainActivity.this, "Prefixes", Toast.LENGTH_SHORT).show();
                        /* for (StorageReference prefix : prefixes) {
                             Toast.makeText(MainActivity.this, prefix.toString(), Toast.LENGTH_SHORT).show();
@@ -275,7 +316,10 @@ public class MainActivity extends AppCompatActivity {
                         //Toast.makeText(MainActivity.this, "Items", Toast.LENGTH_SHORT).show();
 
                         for (StorageReference item : items) {
-                            if(!listItems.contains(item.getName())) listItems.add(item.getName());
+                            if (!listItems.contains(item.getName())) {
+                                listItems.add(item.getName());
+
+                            }
                             //Toast.makeText(MainActivity.this, item.toString(), Toast.LENGTH_LONG).show();
                         }
 
@@ -290,12 +334,35 @@ public class MainActivity extends AppCompatActivity {
             public void onFailure(@NonNull Exception e) {
                 // Uh-oh, an error occurred.
                 Toast.makeText(MainActivity.this, "Uh-oh, an error occurred.", Toast.LENGTH_SHORT).show();
-                Log.e("Error ImageList",e.toString());
+                Log.e("Error ImageList", e.toString());
             }
         });
     }
 
-    //delete file from cloud storage
+
+    /*private void getMetadata(String fileName) {
+        // Get reference to the file
+        StorageReference itemRef = mStorageReference.child("images").child(userId).child(fileName);
+        Task<StorageMetadata> listMetadataTask = itemRef.getMetadata();
+
+        listMetadataTask.addOnSuccessListener(new OnSuccessListener<StorageMetadata>() {
+            @Override
+            public void onSuccess(StorageMetadata storageMetadata) {
+                final ImageData image = new ImageData(storageMetadata.getName(),
+                        storageMetadata.getSizeBytes(),
+                        storageMetadata.getContentType(),
+                        storageMetadata.getCreationTimeMillis(),
+                        storageMetadata.getUpdatedTimeMillis());
+                listImages.add(image);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                Log.e("FireBase", "MetaData is not get");
+            }
+        });
+    }*/
+    /*//delete file from cloud storage
     private void deleteImageFromCloud() {
         StorageReference storageRef = storage.getReference();
 
@@ -314,7 +381,7 @@ public class MainActivity extends AppCompatActivity {
                 // Uh-oh, an error occurred!
             }
         });
-    }
+    }*/
 
     /*//download to file
     private void downloadImage() {

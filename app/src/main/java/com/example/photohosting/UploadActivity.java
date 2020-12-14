@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 
 public class UploadActivity extends AppCompatActivity {
     ImageView imageView;
-    Button btnSelect, btnUpload, btnCrop;
+    Button btnSelect, btnUpload, btnBack;
     private Uri filePath;
     private String userId;
     private String fileName;
@@ -61,7 +61,7 @@ public class UploadActivity extends AppCompatActivity {
         imageView = (ImageView) findViewById(R.id.imageUpload);
         btnSelect = (Button) findViewById(R.id.btnSelect);
         btnUpload = (Button) findViewById(R.id.btnUpload);
-        btnCrop = (Button) findViewById(R.id.btnCrop);
+        btnBack = (Button) findViewById(R.id.btnBack);
 
         //getInstance database and storage
         storage = FirebaseStorage.getInstance();
@@ -71,10 +71,10 @@ public class UploadActivity extends AppCompatActivity {
         userId = intent.getStringExtra("userId");
 
         //Button actions
-        btnCrop.setOnClickListener(new View.OnClickListener() {
+        btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                onBackPressed();
             }
         });
         btnSelect.setOnClickListener(new View.OnClickListener() {
@@ -101,17 +101,7 @@ public class UploadActivity extends AppCompatActivity {
             }
         });*/
     }
-    public boolean doesPackageExist(String targetPackage) {
 
-        PackageManager pm = getPackageManager();
-        try {
-            PackageInfo info = pm.getPackageInfo(targetPackage, PackageManager.GET_META_DATA);
-        } catch (PackageManager.NameNotFoundException e) {
-            Log.d("F_type","packeg"+targetPackage+"not found");
-            return false;
-        }
-        return true;
-    }
     private void chooseImage() {
         final Intent intent = new Intent();
 
@@ -146,8 +136,6 @@ public class UploadActivity extends AppCompatActivity {
     public void uploadImage() {
         if (filePath != null) {
             //check name
-            //final String fileName = UUID.randomUUID().toString();
-            //final String fileName = filePath.getLastPathSegment().replaceFirst(":\\d*$",java.text.DateFormat.getDateTimeInstance().format(new Date()));
             final String rawFileName = filePath.getLastPathSegment().replaceFirst("image:\\d*$",UUID.randomUUID().toString()+".jpg");
             if(rawFileName.contains("storage")) {
                 fileName = rawFileName.substring(rawFileName.lastIndexOf('/'));

@@ -1,12 +1,14 @@
 <resources>
     <string name="app_name">photoHosting</string>
-    <string name="btn_login">log in</string>
-    <string name="btn_register">register</string>
-    <string name="btn_next">next</string>
-    <string name="btn_select">Select Image</string>
-    <string name="btn_upload">Upload Image</string>
-    <string name="btn_download">Download Image</string>
-    <string name="btn_delete">Delete Image</string>
-    <string name="auth">Authorization</string>
-    <string name="reg">Registration</string>
+    <string name="btn_login">Войти</string>
+    <string name="btn_register">Зарегистрироваться</string>
+    <string name="btn_next">Далее</string>
+    <string name="btn_select">Выбрать</string>
+    <string name="btn_upload">Загрузить</string>
+    <string name="btn_download">Скачать</string>
+    <string name="btn_delete">Удалить</string>
+    <string name="auth">Авторизация</string>
+    <string name="reg">Регистрация</string>
+    <string name="tv_fileSize">Размер файла</string>
+    <string name="tv_fileName">Имя файла</string>
 </resources>

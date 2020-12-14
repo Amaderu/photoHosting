@@ -1,10 +1,13 @@
 package com.example.photohosting;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,15 +16,21 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
+
+import org.w3c.dom.Text;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,13 +40,15 @@ import java.nio.file.Paths;
 
 public class DownloadActivity extends AppCompatActivity {
     String TAG = "Create_folder";
+    ImageData imageData;
     ImageView imageView;
-    Button btnDelete, btnDownload;
+    Button btnDelete, btnDownload,btnList;
+    TextView imageName, imageSize;
+
     private Uri filePath;
     private String folderPath;
     private String userId;
     private String fileName;
-    private String imageSize;
 
     /*private final int PICK_IMAGE_REQUEST = 71;*/
     private FirebaseStorage storage;
@@ -51,18 +62,25 @@ public class DownloadActivity extends AppCompatActivity {
     }
 
     private void init() {
+        imageName = (TextView) findViewById(R.id.imageName);
+        imageSize = (TextView) findViewById(R.id.imageSize);
         //search btn on view
         imageView = (ImageView) findViewById(R.id.imageUpload);
         btnDelete = (Button) findViewById(R.id.btnSelect);
         btnDownload = (Button) findViewById(R.id.btnUpload);
+        btnList = (Button) findViewById(R.id.btnList);
+
+
 
         //getInstance database and storage
         storage = FirebaseStorage.getInstance();
         mStorageReference = storage.getReference();
         //fields
-        Intent intent = getIntent();
-        userId = intent.getStringExtra("userId");
-        fileName = intent.getStringExtra("downloadingFile");
+        Bundle arguments = getIntent().getExtras();
+        final int position = arguments.getInt("position");
+
+        userId = arguments.getString("userId");
+        fileName = arguments.getString("downloadingFile");
 
         //Button actions
 
@@ -76,6 +94,12 @@ public class DownloadActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 downloadImageToExternal();
+            }
+        });
+        btnList.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
             }
         });
 
@@ -102,7 +126,7 @@ public class DownloadActivity extends AppCompatActivity {
         imageRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                Toast.makeText(DownloadActivity.this, fileName+"\nУспешно удалён из облака", Toast.LENGTH_LONG).show();
+                Toast.makeText(DownloadActivity.this, fileName + "\nУспешно удалён из облака", Toast.LENGTH_LONG).show();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -111,6 +135,7 @@ public class DownloadActivity extends AppCompatActivity {
             }
         });
     }
+
     /* Checks if external storage is available for read and write */
     public boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
@@ -119,6 +144,7 @@ public class DownloadActivity extends AppCompatActivity {
         }
         return false;
     }
+
     /* Checks if external storage is available to at least read */
     public boolean isExternalStorageReadable() {
         String state = Environment.getExternalStorageState();
@@ -149,6 +175,33 @@ public class DownloadActivity extends AppCompatActivity {
         //file.getAbsolutePath() + "/" + System.currentTimeMillis() + ".jpg";
 
     }
+
+    private void getMetadata(StorageReference storageRef) {
+        // Get reference to the file
+        StorageReference itemRef = storageRef;
+        Task<StorageMetadata> listMetadataTask = itemRef.getMetadata();
+        listMetadataTask.addOnSuccessListener(new OnSuccessListener<StorageMetadata>() {
+            @Override
+            public void onSuccess(StorageMetadata storageMetadata) {
+                imageData = new ImageData(storageMetadata.getName(),
+                        storageMetadata.getSizeBytes(),
+                        storageMetadata.getContentType(),
+                        storageMetadata.getCreationTimeMillis(),
+                        storageMetadata.getUpdatedTimeMillis());
+                if (imageData != null) {
+                    imageName.setText(imageData.getName());
+                    imageSize.setText(imageData.getStringSizeLengthFile());
+                }
+                //Toast.makeText(DownloadActivity.this, imageData.getStringSizeLengthFile(), Toast.LENGTH_LONG).show();
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                Log.e("FireBase", "MetaData is not get");
+            }
+        });
+    }
+
     private void downloadImageToCache() {
         try {
             final StorageReference downloadedFileRef = mStorageReference.child("images").child(userId).child(fileName);
@@ -164,8 +217,10 @@ public class DownloadActivity extends AppCompatActivity {
                                     .centerInside()
                                     .into(imageView);
                             localFile.deleteOnExit();
-                            Log.d("cache","file " + fileName + " download to\n" + localFile.getAbsolutePath());
+                            Log.d("cache", "file " + fileName + " download to\n" + localFile.getAbsolutePath());
                             //Toast.makeText(DownloadActivity.this, "file " + fileName + " download to\n" + localFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
+                            //удалить
+                            getMetadata(downloadedFileRef);
                         }
                     }).addOnFailureListener(new OnFailureListener() {
                 @Override
@@ -173,10 +228,11 @@ public class DownloadActivity extends AppCompatActivity {
                     Log.e("Error download", "error: " + e.toString());
                     Picasso.get()
                             .load(R.drawable.ic_error)
+                            .placeholder(R.drawable.ic_sync)
                             .fit()
                             .centerInside()
                             .into(imageView);
-                    Log.d("cache","file " + fileName + " not downloaded!\n");
+                    Log.d("cache", "file " + fileName + " not downloaded!\n");
                     localFile.deleteOnExit();
                     //Toast.makeText(DownloadActivity.this, "file " + fileName + " not downloaded!", Toast.LENGTH_LONG).show();
                 }
@@ -191,7 +247,7 @@ public class DownloadActivity extends AppCompatActivity {
         //local file
         //final File localFile = new File(DownloadActivity.this.getFilesDir(), fileName);
         final File localFile = new File(folderPath, fileName);
-        Log.d(TAG,"Download to: "+localFile.getAbsolutePath());
+        Log.d(TAG, "Download to: " + localFile.getAbsolutePath());
         final ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setTitle("Download...");
         progressDialog.show();

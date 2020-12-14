@@ -6,6 +6,16 @@
     android:layout_height="match_parent"
     android:background="@color/black"
     tools:context=".DownloadActivity">
+    <Button
+        android:id="@+id/btnList"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:background="@drawable/ic_filterlist"
+        />
 
     <ImageView
         android:id="@+id/imageUpload"
@@ -18,7 +28,7 @@
     <TextView
         android:id="@+id/imageName"
         android:textColor="@color/white"
-        android:text="fileName"
+        android:text="@string/tv_fileName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/imageUpload"
@@ -27,7 +37,7 @@
     <TextView
         android:id="@+id/imageSize"
         android:textColor="@color/white"
-        android:text="imageSize"
+        android:text="@string/tv_fileSize"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/imageName"

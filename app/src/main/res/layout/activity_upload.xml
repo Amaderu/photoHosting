@@ -6,8 +6,18 @@
     android:layout_height="match_parent"
     android:background="@color/white"
     tools:context=".UploadActivity">
+    <Button
+        android:id="@+id/btnBack"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:background="@drawable/ic_union"
+        />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <!--<androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/toolBarUpload"
         android:layout_width="match_parent"
         android:layout_height="80dp"
@@ -17,7 +27,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!--crop-->
+        &lt;!&ndash;crop&ndash;&gt;
         <Button
             android:id="@+id/btnCrop"
             android:layout_width="40dp"
@@ -57,16 +67,16 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@id/edtWidth"
             app:layout_constraintTop_toTopOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>-->
 
     <ImageView
         android:id="@+id/imageUpload"
-        android:layout_width="240dp"
-        android:layout_height="427dp"
+        android:layout_width="300dp"
+        android:layout_height="534dp"
         app:layout_constraintBottom_toTopOf="@id/btnPlaceUpload"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolBarUpload" />
+        app:layout_constraintTop_toTopOf="parent"/>
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
