@@ -30,13 +30,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class DownloadActivity extends AppCompatActivity {
-    String TAG = "Create folder";
+    String TAG = "Create_folder";
     ImageView imageView;
     Button btnDelete, btnDownload;
     private Uri filePath;
     private String folderPath;
     private String userId;
     private String fileName;
+    private String imageSize;
 
     /*private final int PICK_IMAGE_REQUEST = 71;*/
     private FirebaseStorage storage;
@@ -89,6 +90,7 @@ public class DownloadActivity extends AppCompatActivity {
             }
         });*/
         createDirectoryAndSaveFile();
+        downloadImageToCache();
     }
 
     //delete
@@ -100,17 +102,15 @@ public class DownloadActivity extends AppCompatActivity {
         imageRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                Toast.makeText(DownloadActivity.this, "Successful delete image from cloud", Toast.LENGTH_LONG).show();
+                Toast.makeText(DownloadActivity.this, fileName+"\nУспешно удалён из облака", Toast.LENGTH_LONG).show();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception exception) {
-                Toast.makeText(DownloadActivity.this, "Failed delete image from cloud", Toast.LENGTH_LONG).show();
-
+                Toast.makeText(DownloadActivity.this, "Неудачная попытка удаления из облака", Toast.LENGTH_LONG).show();
             }
         });
     }
-
     /* Checks if external storage is available for read and write */
     public boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
@@ -119,7 +119,6 @@ public class DownloadActivity extends AppCompatActivity {
         }
         return false;
     }
-
     /* Checks if external storage is available to at least read */
     public boolean isExternalStorageReadable() {
         String state = Environment.getExternalStorageState();
@@ -143,16 +142,50 @@ public class DownloadActivity extends AppCompatActivity {
             if (!file.mkdirs()) Log.d("Folder", "not Created");
             else {
                 Log.d(TAG, "Created");
-                folderPath = file.getPath();
-                Log.d(TAG, folderPath);
-
             }
         } else Log.d(TAG, "exists");
+        folderPath = file.getPath();
+        Log.d(TAG, folderPath);
         //file.getAbsolutePath() + "/" + System.currentTimeMillis() + ".jpg";
 
     }
+    private void downloadImageToCache() {
+        try {
+            final StorageReference downloadedFileRef = mStorageReference.child("images").child(userId).child(fileName);
+            //cache file
+            final File localFile = File.createTempFile("images", "jpg");
+            downloadedFileRef.getFile(localFile)
+                    .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                            Picasso.get()
+                                    .load(localFile)
+                                    .fit()
+                                    .centerInside()
+                                    .into(imageView);
+                            localFile.deleteOnExit();
+                            Log.d("cache","file " + fileName + " download to\n" + localFile.getAbsolutePath());
+                            //Toast.makeText(DownloadActivity.this, "file " + fileName + " download to\n" + localFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Log.e("Error download", "error: " + e.toString());
+                    Picasso.get()
+                            .load(R.drawable.ic_error)
+                            .fit()
+                            .centerInside()
+                            .into(imageView);
+                    Log.d("cache","file " + fileName + " not downloaded!\n");
+                    localFile.deleteOnExit();
+                    //Toast.makeText(DownloadActivity.this, "file " + fileName + " not downloaded!", Toast.LENGTH_LONG).show();
+                }
+            });
+        } catch (IOException e) {
+        }
+    }
 
-    //download to cache file
+    //download to External file
     private void downloadImageToExternal() {
         final StorageReference downloadedFileRef = mStorageReference.child("images").child(userId).child(fileName);
         //local file
@@ -171,15 +204,16 @@ public class DownloadActivity extends AppCompatActivity {
                         //Bitmap bitmap = BitmapFactory.decodeFile(localFile.getAbsolutePath());
                         //Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), filePath);
                         //Не нужно показывать
-                        Picasso.get()
+                        /*Picasso.get()
                                 .load(localFile)
                                 //.resize(imageView.getWidth(), imageView.getHeight())
                                 .fit()
                                 .centerInside()
-                                .into(imageView);
+                                .into(imageView);*/
 
                         //localFile.deleteOnExit();
-                        Toast.makeText(DownloadActivity.this, "file " + fileName + " download to\n" + localFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
+                        //Toast.makeText(DownloadActivity.this, "file " + fileName + " download to\n" + localFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(DownloadActivity.this, "Успешно скачено", Toast.LENGTH_LONG).show();
                     }
                 }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -191,7 +225,7 @@ public class DownloadActivity extends AppCompatActivity {
                         .fit()
                         .centerInside()
                         .into(imageView);
-                Toast.makeText(DownloadActivity.this, "file " + fileName + " not downloaded!", Toast.LENGTH_LONG).show();
+                Toast.makeText(DownloadActivity.this, "Файл не был скачан!", Toast.LENGTH_LONG).show();
             }
         }).addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
             @Override

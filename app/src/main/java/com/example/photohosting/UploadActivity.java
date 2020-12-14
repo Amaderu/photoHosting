@@ -5,10 +5,15 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
+import android.icu.text.SimpleDateFormat;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -24,12 +29,18 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
+import java.util.regex.Pattern;
 
 public class UploadActivity extends AppCompatActivity {
     ImageView imageView;
     Button btnSelect, btnUpload, btnCrop;
     private Uri filePath;
     private String userId;
+    private String fileName;
 
     private final int PICK_IMAGE_REQUEST = 71;
     private FirebaseStorage storage;
@@ -90,12 +101,27 @@ public class UploadActivity extends AppCompatActivity {
             }
         });*/
     }
+    public boolean doesPackageExist(String targetPackage) {
+
+        PackageManager pm = getPackageManager();
+        try {
+            PackageInfo info = pm.getPackageInfo(targetPackage, PackageManager.GET_META_DATA);
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.d("F_type","packeg"+targetPackage+"not found");
+            return false;
+        }
+        return true;
+    }
     private void chooseImage() {
         final Intent intent = new Intent();
 
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
         startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
+        /*if(doesPackageExist("com.miui.gallery"))
+            intent.setClassName("com.miui.gallery", "com.miui.gallery.activity.");*/
+        //startActivityForResult(intent, PICK_IMAGE_REQUEST);
+        //com.miui.gallery.open
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -103,6 +129,10 @@ public class UploadActivity extends AppCompatActivity {
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK
                 && data != null && data.getData() != null) {
             filePath = data.getData();
+
+            Log.d("F_type","filepath "+data.getData());
+            Log.d("F_type","fileType "+data.getType());
+            Log.d("F_type","Intent PackageName "+ data.getPackage());
             try {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), filePath);
                 imageView.setImageBitmap(bitmap);
@@ -116,9 +146,14 @@ public class UploadActivity extends AppCompatActivity {
     public void uploadImage() {
         if (filePath != null) {
             //check name
-            //final String fileName =UUID.randomUUID().toString();
-            final String fileName = filePath.getLastPathSegment();
-
+            //final String fileName = UUID.randomUUID().toString();
+            //final String fileName = filePath.getLastPathSegment().replaceFirst(":\\d*$",java.text.DateFormat.getDateTimeInstance().format(new Date()));
+            final String rawFileName = filePath.getLastPathSegment().replaceFirst("image:\\d*$",UUID.randomUUID().toString()+".jpg");
+            if(rawFileName.contains("storage")) {
+                fileName = rawFileName.substring(rawFileName.lastIndexOf('/'));
+            }
+            else fileName = rawFileName;
+            Log.d("F_type","fileName "+fileName);
             final ProgressDialog progressDialog = new ProgressDialog(this);
             progressDialog.setTitle("Uploading...");
             progressDialog.show();
