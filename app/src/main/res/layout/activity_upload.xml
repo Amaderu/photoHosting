@@ -71,8 +71,8 @@
 
     <ImageView
         android:id="@+id/imageUpload"
-        android:layout_width="300dp"
-        android:layout_height="534dp"
+        android:layout_width="match_parent"
+        android:layout_height="427dp"
         app:layout_constraintBottom_toTopOf="@id/btnPlaceUpload"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"

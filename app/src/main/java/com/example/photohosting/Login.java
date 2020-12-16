@@ -24,8 +24,8 @@ import java.util.regex.Pattern;
 
 public class Login extends AppCompatActivity {
     private EditText Mail;
-    private EditText Password;
-    private Button btnNext;
+    private EditText Password ,ConPass;
+    private Button btnNext, btnBack;
 
     private FirebaseAuth mAuth;
     private FirebaseUser cUser;
@@ -40,10 +40,10 @@ public class Login extends AppCompatActivity {
                     //"(?=.*[0-9])" +         //at least 1 digit
                     //"(?=.*[a-z])" +         //at least 1 lower case letter
                     //"(?=.*[A-Z])" +         //at least 1 upper case letter
-                    "(?=.*[a-zA-Z])" +      //any letter
-                    "(?=.*[@#$%^&+=])" +    //at least 1 special character
+                    "(?=.*[a-zA-Z0-9])" +      //any letter
+                    //"(?=.*[@#$%^&+=])" +    //at least 1 special character
                     "(?=\\S+$)" +           //no white spaces
-                    ".{4,}" +               //at least 4 characters
+                    ".{8,}" +               //at least 4 characters
                     "$");
 
     @Override
@@ -73,19 +73,30 @@ public class Login extends AppCompatActivity {
         Mail = (EditText) findViewById(R.id.edtFieldMail);
         Password = (EditText) findViewById(R.id.edtFieldPass);
         btnNext = (Button) findViewById(R.id.login_btnNext);
+        btnBack = (Button) findViewById(R.id.btnBackLog);
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
         lable = (TextView) findViewById(R.id.textView);
-        if (Status.equals("reg")) lable.setText(R.string.reg);
+        if (Status.equals("reg")) {
+            lable.setText(R.string.reg);
+            ConPass= (EditText) findViewById(R.id.edtFieldConPass);
+            ConPass.setVisibility(View.VISIBLE);
+        }
     }
 
     private boolean validateUser() {
-        if (!validatePassword() || !validateMail()) return false;
+        if (!validateMail() ||!validatePassword()) return false;
         return true;
     }
 
     private boolean validateMail() {
         final String MailInput = Mail.getText().toString().trim();
         if (MailInput.isEmpty()) {
-            Mail.setError("Field can't be empty");
+            Mail.setError("Незаполненое поле");
             return false;
         } else {
             Mail.setError(null);
@@ -96,13 +107,62 @@ public class Login extends AppCompatActivity {
     private boolean validatePassword() {
         final String passwordInput = Password.getText().toString().trim();
         if (passwordInput.isEmpty()) {
-            Password.setError("Field can't be empty");
+            Password.setError("Незаполненое поле");
             return false;
         } else {
             Password.setError(null);
             return true;
         }
     }
+    private boolean validateCreateUser() {
+        if (!validateEmailReg() || !validatePasswordReg() || !validateConPassword() ) return false;
+        return true;
+    }
+
+    private boolean validateEmailReg() {
+        String emailInput = Mail.getText().toString().trim();
+        if (emailInput.isEmpty()) {
+            Mail.setError("Незаполненое поле");
+            return false;
+        } else if (!Patterns.EMAIL_ADDRESS.matcher(emailInput).matches()) {
+            Mail.setError("введите существующий электронный адресс");
+            return false;
+        } else {
+            Mail.setError(null);
+            return true;
+        }
+    }
+
+    private boolean validatePasswordReg() {
+        String passwordInput = Password.getText().toString().trim();
+        if (passwordInput.isEmpty()) {
+            Password.setError("Незаполненое поле");
+            return false;
+        }else if (passwordInput.length() < 8) {
+            Password.setError("Пароль должен быть длиннее 8 символов");
+            return false;
+        }else if (!PASSWORD_PATTERN.matcher(passwordInput).matches()) {
+            Password.setError("Слабый пароль");
+            return false;
+        } else {
+            Password.setError(null);
+            return true;
+        }
+    }
+    private boolean validateConPassword(){
+        String passwordInput = Password.getText().toString().trim();
+        String ConPasswordInput = ConPass.getText().toString().trim();
+        if(!passwordInput.equals(ConPasswordInput)){
+            ConPass.setError("Пароли не соврадают");
+            return false;
+        }
+        else{
+            ConPass.setError(null);
+            return true;
+        }
+    }
+
+
 
     private void createUser(String mail, String password) {
         mAuth.createUserWithEmailAndPassword(mail, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
@@ -111,9 +171,10 @@ public class Login extends AppCompatActivity {
                 if (task.isSuccessful()) {
                     lable.setText(R.string.auth);
                     Status = "log";
-                    Toast.makeText(getApplicationContext(), "User SignUp Successful", Toast.LENGTH_SHORT).show();
+                    ConPass.setVisibility(View.GONE);
+                    Toast.makeText(getApplicationContext(), "Вы успешно зарегистрировались", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(getApplicationContext(), "User SignUp failed", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Регистрация была отклонена", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -124,7 +185,7 @@ public class Login extends AppCompatActivity {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful()) {
-                    Toast.makeText(getApplicationContext(), "User SignIn Successful", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Успешный вход", Toast.LENGTH_SHORT).show();
                     cUser = mAuth.getCurrentUser();
                     if(cUser != null)
                     {
@@ -135,7 +196,7 @@ public class Login extends AppCompatActivity {
                         startActivity(intent);
                     }
                 } else {
-                    Toast.makeText(getApplicationContext(), "User SignIn failed", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Вход в аккаунт отклонён", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -143,15 +204,16 @@ public class Login extends AppCompatActivity {
 
 
     public void enter(View v) {
-        if (!validateUser()) return;
         final String mail, pass;
         mail = Mail.getText().toString();
         pass = Password.getText().toString();
         switch (Status) {
             case "log":
+                if (!validateUser()) return;
                 logInUser(mail, pass);
                 break;
             case "reg":
+                if (!validateCreateUser()) return;
                 createUser(mail, pass);
                 break;
             default:

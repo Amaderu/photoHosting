@@ -11,4 +11,7 @@
     <string name="reg">Регистрация</string>
     <string name="tv_fileSize">Размер файла</string>
     <string name="tv_fileName">Имя файла</string>
+    <string name="hint_pass">Пароль</string>
+    <string name="hint_mail">Почта</string>
+    <string name="hint_con_pass">Подтвердите пароль</string>
 </resources>

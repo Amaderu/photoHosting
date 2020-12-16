@@ -8,7 +8,7 @@
     tools:context=".Login">
 
     <Button
-        android:id="@+id/imageView"
+        android:id="@+id/btnBackLog"
         android:layout_width="25dp"
         android:layout_height="25dp"
         android:layout_marginStart="10dp"
@@ -38,7 +38,7 @@
         android:layout_marginHorizontal="10dp"
         android:layout_marginTop="20dp"
         android:ems="10"
-        android:hint="Mail"
+        android:hint="@string/hint_mail"
         android:inputType="textPersonName"
         app:layout_constraintStart_toStartOf="@id/textView"
         app:layout_constraintTop_toBottomOf="@+id/textView" />
@@ -50,11 +50,22 @@
         android:layout_marginHorizontal="10dp"
         android:layout_marginTop="20dp"
         android:ems="10"
-        android:hint="password"
+        android:hint="@string/hint_pass"
         android:inputType="textPassword"
         app:layout_constraintStart_toStartOf="@id/edtFieldMail"
         app:layout_constraintTop_toBottomOf="@id/edtFieldMail" />
-
+    <EditText
+        android:id="@+id/edtFieldConPass"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="10dp"
+        android:layout_marginTop="20dp"
+        android:ems="10"
+        android:hint="@string/hint_con_pass"
+        android:inputType="textPassword"
+        app:layout_constraintStart_toStartOf="@id/edtFieldMail"
+        app:layout_constraintTop_toBottomOf="@id/edtFieldPass"
+        android:visibility="gone"/>
 
     <Button
         android:id="@+id/login_btnNext"
@@ -63,11 +74,12 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="10dp"
         android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
         android:text="@string/btn_next"
         android:textFontWeight="900"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/edtFieldPass"
+        app:layout_constraintBottom_toBottomOf="parent"
         android:onClick="enter"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

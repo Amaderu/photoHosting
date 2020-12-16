@@ -20,6 +20,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -69,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
     /*Button btnSelect, btnUpload;
     private final int PICK_IMAGE_REQUEST = 71;*/
     Button btnSignOut, btnSearch, btnToUpload, btnSync;
+    EditText searchForWord;
     ListView listView;
     private Uri filePath;
     private String userId;
@@ -83,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseDatabase mDataBase;
     private DatabaseReference mDataBaseReference;
     private String USER_KEY = "Users";
-    String searchFName = "island";
+    String searchFName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
                 listItems);
         listView.setAdapter(arrayAdapter);
         setOnClickItem();
-
+        searchForWord = (EditText) findViewById(R.id.edt_searchWord);
 
         //search btn on view
         btnSignOut = (Button) findViewById(R.id.btnSignOut);
@@ -126,6 +128,8 @@ public class MainActivity extends AppCompatActivity {
                 page = null;
                 pageCount = 0;
                 listItems.clear();
+                searchFName=searchForWord.getText().toString().trim();
+                if(searchFName!=null||searchFName!="")
                 imageListAllPaginated(page, searchFName);
             }
         });
@@ -188,6 +192,7 @@ public class MainActivity extends AppCompatActivity {
                 //Handle whatever you're going to do with the URL here
             }
         });*/
+        imageListAllPaginated(page);
     }
 
     public void SortForDate() {
@@ -255,19 +260,18 @@ public class MainActivity extends AppCompatActivity {
                 .addOnSuccessListener(new OnSuccessListener<ListResult>() {
                     @Override
                     public void onSuccess(ListResult listResult) {
-                        List<StorageReference> prefixes = listResult.getPrefixes();
+                        //List<StorageReference> prefixes = listResult.getPrefixes();
                         List<StorageReference> items = listResult.getItems();
                         pageCount += 1;
 
                         // Process page of results
-                        Toast.makeText(MainActivity.this, "Page " + pageCount, Toast.LENGTH_SHORT).show();
-                        Toast.makeText(MainActivity.this, "Page token: " + pageToken, Toast.LENGTH_SHORT).show();
+                        /*Toast.makeText(MainActivity.this, "Странница " + pageCount, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "Page token: " + pageToken, Toast.LENGTH_SHORT).show();*/
                         //Toast.makeText(MainActivity.this, "Prefixes", Toast.LENGTH_SHORT).show();
                        /* for (StorageReference prefix : prefixes) {
                             Toast.makeText(MainActivity.this, prefix.toString(), Toast.LENGTH_SHORT).show();
                         }*/
                         //Toast.makeText(MainActivity.this, "Items", Toast.LENGTH_SHORT).show();
-
                         for (StorageReference item : items) {
                             if (!listItems.contains(item.getName()) && item.getName().matches("^.*" + searchFName + ".*$")) {
                                 listItems.add(item.getName());
@@ -307,7 +311,7 @@ public class MainActivity extends AppCompatActivity {
                         pageCount += 1;
 
                         // Process page of results
-                        Toast.makeText(MainActivity.this, "Page " + pageCount, Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(MainActivity.this, "Странница " + pageCount, Toast.LENGTH_SHORT).show();
                         //Toast.makeText(MainActivity.this, "Page token: "+pageToken, Toast.LENGTH_SHORT).show();
                         //Toast.makeText(MainActivity.this, "Prefixes", Toast.LENGTH_SHORT).show();
                        /* for (StorageReference prefix : prefixes) {
