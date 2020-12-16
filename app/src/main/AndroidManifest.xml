@@ -23,7 +23,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".Login" />
-        <activity android:name=".MainActivity" />
+        <activity android:name=".MainActivity"
+            android:windowSoftInputMode="stateAlwaysHidden"/>
     </application>
 
 </manifest>

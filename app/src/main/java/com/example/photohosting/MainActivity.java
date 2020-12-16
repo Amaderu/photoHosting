@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     List<StorageReference> prefixes;
     List<StorageReference> items;
     String page;
+    int EXITE_DELETE = 345;
     /*Button btnSelect, btnUpload;
     private final int PICK_IMAGE_REQUEST = 71;*/
     Button btnSignOut, btnSearch, btnToUpload, btnSync;
@@ -93,6 +94,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         init();
     }
+
 
     private void init() {
         //data
@@ -502,11 +504,11 @@ public class MainActivity extends AppCompatActivity {
     }*/
 
     public void accountSignOut() {
-        showDialog(776);
+        showDialog(EXITE_DELETE);
     }
 
     protected Dialog onCreateDialog(int id) {
-        if (id == 776) {
+        if (id == EXITE_DELETE) {
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
             builder.setTitle("Выход из аккаунта");  // заголовок
             builder.setMessage("Вы действительно хотите выйти?"); // сообщение

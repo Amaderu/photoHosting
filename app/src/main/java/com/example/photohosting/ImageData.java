@@ -145,11 +145,3 @@ public int compare(Date date1, Date date2){
 
 }*/
 
-class CompareByName implements Comparator<ImageData> {
-
-    @Override
-    public int compare(ImageData o1, ImageData o2) {
-        return o1.name.compareTo(o2.name);
-    }
-
-}

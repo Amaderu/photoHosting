@@ -1,8 +1,10 @@
 package com.example.photohosting;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.DialogFragment;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -40,6 +42,7 @@ import java.nio.file.Paths;
 
 public class DownloadActivity extends AppCompatActivity {
     String TAG = "Create_folder";
+    int DIALOG_DELETE = 312;
     ImageData imageData;
     ImageView imageView;
     Button btnDelete, btnDownload,btnList;
@@ -87,7 +90,7 @@ public class DownloadActivity extends AppCompatActivity {
         btnDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                deleteImageFromCloud();
+                DeleteDialog();
             }
         });
         btnDownload.setOnClickListener(new View.OnClickListener() {
@@ -116,6 +119,9 @@ public class DownloadActivity extends AppCompatActivity {
         createDirectoryAndSaveFile();
         downloadImageToCache();
     }
+
+    /*
+    }*/
 
     //delete
     private void deleteImageFromCloud() {
@@ -213,6 +219,7 @@ public class DownloadActivity extends AppCompatActivity {
                         public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                             Picasso.get()
                                     .load(localFile)
+                                    .placeholder(R.drawable.ic_sync)
                                     .fit()
                                     .centerInside()
                                     .into(imageView);
@@ -228,7 +235,6 @@ public class DownloadActivity extends AppCompatActivity {
                     Log.e("Error download", "error: " + e.toString());
                     Picasso.get()
                             .load(R.drawable.ic_error)
-                            .placeholder(R.drawable.ic_sync)
                             .fit()
                             .centerInside()
                             .into(imageView);
@@ -249,7 +255,7 @@ public class DownloadActivity extends AppCompatActivity {
         final File localFile = new File(folderPath, fileName);
         Log.d(TAG, "Download to: " + localFile.getAbsolutePath());
         final ProgressDialog progressDialog = new ProgressDialog(this);
-        progressDialog.setTitle("Download...");
+        progressDialog.setTitle("Скачивание...");
         progressDialog.show();
 
         downloadedFileRef.getFile(localFile)
@@ -288,7 +294,7 @@ public class DownloadActivity extends AppCompatActivity {
             public void onProgress(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot
                         .getTotalByteCount());
-                progressDialog.setMessage("Downloaded " + (int) progress + "%");
+                progressDialog.setMessage("Скачано " + (int) progress + "%");
             }
         });
     }
@@ -300,56 +306,29 @@ public class DownloadActivity extends AppCompatActivity {
         } else Toast.makeText(this, "Failed delete image from cache", Toast.LENGTH_LONG).show();
     }
 
-    //download to cache file
-    private void downloadImage() {
-        try {
-            final StorageReference downloadedFileRef = mStorageReference.child("images").child(userId).child(fileName);
-            //cache file
-            final File localFile = File.createTempFile("images", "jpg");
-            //final File localFile = new File(DownloadActivity.this.getFilesDir(), fileName);
-            final ProgressDialog progressDialog = new ProgressDialog(this);
-            progressDialog.setTitle("Download...");
-            progressDialog.show();
+    public void DeleteDialog() {
+        showDialog(DIALOG_DELETE);
+    }
 
-            downloadedFileRef.getFile(localFile)
-                    .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                        @Override
-                        public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                            progressDialog.dismiss();
-                            //vtyzk
-                            //Bitmap bitmap = BitmapFactory.decodeFile(localFile.getAbsolutePath());
-                            //Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), filePath);
-                            Picasso.get()
-                                    .load(localFile)
-                                    //.resize(imageView.getWidth(), imageView.getHeight())
-                                    .fit()
-                                    .centerInside()
-                                    .into(imageView);
-
-                            //localFile.deleteOnExit();
-                            Toast.makeText(DownloadActivity.this, "file " + fileName + " download to\n" + localFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
-                        }
-                    }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    progressDialog.dismiss();
-                    Log.e("Error download", "error: " + e.toString());
-                    Picasso.get()
-                            .load(R.drawable.ic_error)
-                            .resize(150, 150)
-                            .centerCrop()
-                            .into(imageView);
-                    Toast.makeText(DownloadActivity.this, "file " + fileName + " not downloaded!", Toast.LENGTH_LONG).show();
-                }
-            }).addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
-                @Override
-                public void onProgress(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                    double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot
-                            .getTotalByteCount());
-                    progressDialog.setMessage("Downloaded " + (int) progress + "%");
+    protected Dialog onCreateDialog(int id) {
+        if (id == DIALOG_DELETE) {
+            androidx.appcompat.app.AlertDialog.Builder builder = new AlertDialog.Builder(DownloadActivity.this);
+            builder.setTitle("Удаление фотографии");  // заголовок
+            builder.setMessage("Вы действительно хотите Удалить фотографию из облака?"); // сообщение
+            builder.setPositiveButton("Да", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    deleteImageFromCloud();
+                    onBackPressed();
                 }
             });
-        } catch (IOException e) {
+            builder.setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    Toast.makeText(DownloadActivity.this, "Операция отменена", Toast.LENGTH_SHORT).show();
+                }
+            });
+            builder.setCancelable(true);
+            return builder.create();
         }
+        return super.onCreateDialog(id);
     }
 }

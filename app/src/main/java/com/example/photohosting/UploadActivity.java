@@ -27,6 +27,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.util.Date;
@@ -69,7 +70,7 @@ public class UploadActivity extends AppCompatActivity {
         //
         Intent intent = getIntent();
         userId = intent.getStringExtra("userId");
-
+        imageView.setImageResource(R.drawable.ic_images32x32);
         //Button actions
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -143,7 +144,7 @@ public class UploadActivity extends AppCompatActivity {
             else fileName = rawFileName;
             Log.d("F_type","fileName "+fileName);
             final ProgressDialog progressDialog = new ProgressDialog(this);
-            progressDialog.setTitle("Uploading...");
+            progressDialog.setTitle("Загрузка...");
             progressDialog.show();
 
             StorageReference ref = mStorageReference.child("images").child(userId).child(fileName);
@@ -152,14 +153,14 @@ public class UploadActivity extends AppCompatActivity {
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                             progressDialog.dismiss();
-                            Toast.makeText(UploadActivity.this, "Uploaded", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(UploadActivity.this, "Изображение\n"+ fileName +"\nзагружено", Toast.LENGTH_SHORT).show();
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
                             progressDialog.dismiss();
-                            Toast.makeText(UploadActivity.this, "Failed " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(UploadActivity.this, "Ошибка загрузки", Toast.LENGTH_SHORT).show();
                         }
                     })
                     .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
@@ -167,7 +168,7 @@ public class UploadActivity extends AppCompatActivity {
                         public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
                             double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot
                                     .getTotalByteCount());
-                            progressDialog.setMessage("Uploaded " + (int) progress + "%");
+                            progressDialog.setMessage("Загружено " + (int) progress + "%");
                         }
                     });
         }
